@@ -1,26 +1,33 @@
 NAME
-    HTML::StickyQuery - add sticky QUERY_STRING to a tag href attributes.
+    HTML::StickyQuery - add sticky QUERY_STRING
 
 SYNOPSIS
       use HTML::StickyQuery;
 
+      # create an object
       my $s = HTML::StickyQuery->new(
-                                     regexp => '\.cgi$',
-                                     abs => 0,
-                                     override => 1
-                                     );
+           regexp => '\.cgi$',
+           abs => 0,
+           keep_original => 1
+      );
+
       print $s->sticky(
-                       file => 'foo.html',
-                       param => {
-                                 SESSIONID => 'xxx'
-                                 }
-                       );
+          file => 'foo.html',
+          param => { SESSIONID => 'xxx' }
+      );
+
+     or
+
+      my $q = CGI->new;
+      print $s->sticky(
+          file => 'foo.html',
+          param => $q
+      );
 
 DESCRIPTION
-    this module is sub class of the HTML::Parser manpage and uses it to
-    parse HTML document and add QUERY_STRING to href attributes.
-
-    you can assign Session ID or any form data without using cookie.
+    this module is a sub class of the HTML::Parser manpage. parse HTML
+    document and add QUERY_STRING to href attributes. Handy for maintaining
+    state without cookie or something, transparently.
 
     if you want to use sticky CGI data via FORM. it is better to use the
     HTML::FillInForm manpage.
@@ -29,37 +36,40 @@ CONSTRUCTOR
     new(%option)
         constructor of HTML::StickyQuery object. the options are below.
 
-        abs  add QUERY_STRING to absolute URI or not. (default: 0)
+    abs      add QUERY_STRING to absolute URI or not. (default: 0)
 
-        override
-             override original QUERY_STRING or not (default: 0)
+    override this option is obsolete. please use keep_original option.
 
-        regexp
-             regular expression of affected URI. (default: *none*)
+    keep_original
+             keep original QUERY_STRING or not. (default: 1) when this
+             option is false. all old QUERY_STRING is removed.
+
+    regexp   regular expression of affected URI. (default: *none*)
 
 METHODS
     sticky(%options)
         parse HTML and add QUERY_STRING. return HTML document. the options
         are below.
 
-        file specify the HTML file.
+    file     specify the HTML file.
 
-        scalarref
+    scalarref
              specify the HTML document as scalarref.
 
-        arrayref
-             specify the HTML document as arrayref.
+    arrayref specify the HTML document as arrayref.
 
-        param
-             QUERY_STRING data. as hashref.
+    param    QUERY_STRING data. as hashref or object which implements *param*
+             method. (eg. CGI, Apache::Request)
 
-EXAMPLE
+EXAMPLES
+  KEEP SESSION ID
+
     typical example of CGI application using session.
 
-    use the Apache::Session manpage,the HTML::Template manpage and the
+    use the Apache::Session>,L<HTML::Template manpage and the
     HTML::StickyQuery manpage
 
-    template file. test.html
+    template file:
 
      <html>
      <head>
@@ -68,24 +78,24 @@ EXAMPLE
      <body>
      COUNT: <TMPL_VAR NAME="count"><br>
      <hr>
-     <a href="test.cgi">countup</a><br>
+     <a href="session.cgi">countup</a><br>
      <hr>
      </body>
      </html>
 
-    CGI program. test.cgi
+    session.cgi:
 
-     #!/usr/local/bin/perl
- 
+     #!perl
+     
      use strict;
      use CGI;
      use HTML::Template;
      use HTML::StickyQuery;
      use Apache::Session::DB_File;
- 
+     
      my %session;
      my $cgi = CGI->new;
- 
+     
      # create session.
      my $id = $cgi->param('SESSIONID');
      tie %session,'Apache::Session::DB_File',$id,{
@@ -94,24 +104,51 @@ EXAMPLE
      };
 
      $session{count} = $session{count} + 1;
- 
+     
      my $tmpl = HTML::Template->new(filename => './test.html');
- 
+     
      $tmpl->param(count => $session{count});
- 
+     
      my $output = $tmpl->output;
- 
+     
      # no COOKIE
      print $cgi->header;
- 
+     
      my $stq = HTML::StickyQuery->new;
      print $stq->sticky(
-                        scalarref => \$output,
-                        param => {
-                                  SESSIONID => $session{_session_id}
-                                 }
-                       );
- 
+         scalarref => \$output,
+         param => { SESSIONID => $session{_session_id} }
+     );
+
+  KEEP SEARCH WORD IN HTML PAGING
+
+    template file (simplified):
+
+      <A href="./search.cgi?pagenum=<TMPL_VAR name=nextpage>">Next 20 results</A>
+
+    search.cgi:
+
+      #!perl
+      use CGI;
+      use HTML::StickyQuery;
+      use HTML::Template;
+
+      my $query = CGI->new;
+      my $tmpl  = HTML::Template->new(filename => 'search.html');
+
+      # do searching with $query and put results into $tmpl
+      # ...
+
+      # set next page offset
+      $tmpl->param(nextpagee => $query->param('pagenum') + 1);
+
+      my $output = $tmpl->output;
+      my $sticky = HTML::StickyQuery->new(regexp => qr/search\.cgi$/);
+      print $query->header, $sticky->sticky(
+          scalarref => \$output,
+          param => { search => $query->param('search') },
+      );
+
 AUTHOR
     IKEBE Tomohiro <ikebe@edge.co.jp>
 
@@ -121,10 +158,10 @@ SEE ALSO
 CREDITS
     Fixes,Bug Reports.
 
-     Tatsuhiko Miyagawa
+    Tatsuhiko Miyagawa <miyagawa@bulknews.net>
 
 COPYRIGHT
-    Copyright(C) 2001 IKEBE Tomohiro All rights reserved.
+    Copyright(C) 2002 IKEBE Tomohiro All rights reserved.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

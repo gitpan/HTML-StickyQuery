@@ -1,3 +1,10 @@
+2002-09-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* 0.09
+	* now accept paramable objects. 
+	(Thanks to Hiroyuki Kobayasi <kobayasi@cpan.org>)
+	* fixed docs.
+
 2002-05-01  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.08

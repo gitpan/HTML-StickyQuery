@@ -3,21 +3,19 @@ package HTML::StickyQuery;
 use strict;
 use base qw(HTML::Parser);
 use URI;
-use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 sub new {
     my $class = shift;
-    croak "odd number of " . __PACKAGE__ . "->new arguments" if @_ % 2;
+    _croak("odd number of " . __PACKAGE__ . "->new arguments") if @_ % 2;
     my %args = @_;
     my $self = bless {
 	keep_original => 1,
 	abs => 0,
 	regexp => undef,
     }, $class;
-
     foreach my $key(qw(keep_original abs regexp)) {
 	$self->{$key} = $args{$key} if exists $args{$key};
     }
@@ -30,14 +28,18 @@ sub new {
 sub sticky {
     my $self = shift;
     my %args = @_;
-
-    $self->{param} = $args{param} 
-	if exists $args{param};
-    $self->{output} = "";
-
-    if (ref($args{param}) ne 'HASH') {
-	croak "param must be a hash reference";
+    if (ref $args{param} eq 'HASH') {
+	$self->{param} = $args{param}
     }
+    elsif ($args{param}->can("param")) {
+	my %data = ();
+	for my $key($args{param}->param) {
+	    my @val = $args{param}->param($key);
+	    $data{$key} = scalar(@val) > 1 ? \@val : $val[0];
+	}
+	$self->{param} = \%data;
+    }
+    $self->{output} = "";
     if ($args{file}) {
 	$self->parse_file($args{file});
     }
@@ -144,6 +146,11 @@ sub declaration {
     $self->{output} .= qq/<!$orig>/;
 }
 
+sub _croak {
+    require Carp;
+    Carp::croak(@_);
+}
+
 sub escapeHTML {
     my $self = shift;
     my $text = shift;
@@ -160,28 +167,37 @@ __END__
 
 =head1 NAME
 
-HTML::StickyQuery - add sticky QUERY_STRING to a tag href attributes.
+HTML::StickyQuery - add sticky QUERY_STRING 
 
 =head1 SYNOPSIS
 
   use HTML::StickyQuery;
 
+  # create an object
   my $s = HTML::StickyQuery->new(
-                                 regexp => '\.cgi$',
-                                 abs => 0,
-                                 keep_original => 1
-                                 );
+       regexp => '\.cgi$',
+       abs => 0,
+       keep_original => 1
+  );
+
   print $s->sticky(
-                   file => 'foo.html',
-                   param => {
-                             SESSIONID => 'xxx'
-                             }
-                   );
+      file => 'foo.html',
+      param => { SESSIONID => 'xxx' }
+  );
+
+ or
+
+  my $q = CGI->new;
+  print $s->sticky(
+      file => 'foo.html',
+      param => $q
+  );
+
 
 =head1 DESCRIPTION
 
-this module is sub class of L<HTML::Parser> and uses it to parse HTML document
-and add QUERY_STRING to href attributes.
+this module is a sub class of L<HTML::Parser>.
+parse HTML document and add QUERY_STRING to href attributes.
 Handy for maintaining state without cookie or something, transparently.
 
 if you want to use sticky CGI data via FORM.
@@ -244,13 +260,14 @@ specify the HTML document as arrayref.
 
 =item param
 
-QUERY_STRING data. as hashref.
+QUERY_STRING data. as hashref or object which implements I<param> method.
+(eg. CGI, Apache::Request)
 
 =back
 
 =back
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 =head2 KEEP SESSION ID
 
@@ -305,12 +322,9 @@ session.cgi:
  
  my $stq = HTML::StickyQuery->new;
  print $stq->sticky(
-	 	    scalarref => \$output,
-		    param => {
-			      SESSIONID => $session{_session_id}
-			     }
-		   );
- 
+     scalarref => \$output,
+     param => { SESSIONID => $session{_session_id} }
+ );
 
 =head2 KEEP SEARCH WORD IN HTML PAGING
 
@@ -336,11 +350,12 @@ search.cgi:
 
   my $output = $tmpl->output;
   my $sticky = HTML::StickyQuery->new(regexp => qr/search\.cgi$/);
-  ptiny $query->header, $sticky->sticky(
+  print $query->header, $sticky->sticky(
       scalarref => \$output,
       param => { search => $query->param('search') },
   );
- 
+
+
 =head1 AUTHOR
 
 IKEBE Tomohiro E<lt>ikebe@edge.co.jpE<gt>
@@ -353,11 +368,11 @@ L<HTML::Parser> L<HTML::FillInForm>
 
 Fixes,Bug Reports.
 
- Tatsuhiko Miyagawa
+Tatsuhiko Miyagawa E<lt>miyagawa@bulknews.netE<gt>
 
 =head1 COPYRIGHT
 
-Copyright(C) 2001 IKEBE Tomohiro All rights reserved.
+Copyright(C) 2002 IKEBE Tomohiro All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself. 
 

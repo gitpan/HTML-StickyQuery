@@ -12,6 +12,8 @@ t/06abs.t
 t/07arrayref.t
 t/08escape.t
 t/09comment.t
+t/10multiple.t
+t/11param.t
 t/test.html
 t/test2.html
 t/test3.html
