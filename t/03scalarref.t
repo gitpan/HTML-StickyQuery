@@ -1,8 +1,6 @@
 
-use Test;
+use Test::More tests => 1;
 use HTML::StickyQuery;
-
-BEGIN{plan tests => 1}
 
 # scalarref
 open(FILE,"./t/test.html") or die $!;
@@ -15,5 +13,5 @@ $s->sticky(
 	   param => {SID => 'xxx'}
 	   );
 
-ok($s->output,'<a href="./test.cgi?SID=xxx">');
+like($s->output, qr#<a href="\./test\.cgi\?SID=xxx">#);
 

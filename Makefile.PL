@@ -6,6 +6,7 @@ WriteMakefile(
 	      'VERSION_FROM' => 'StickyQuery.pm', # finds $VERSION
 	      'PREREQ_PM' => {
 			      URI => '1.00',
-			      HTML::Parser => 3
+			      HTML::Parser => 3,
+			      Test::More => 0.32,
 			     }
 );

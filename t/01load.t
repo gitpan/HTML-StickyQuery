@@ -1,7 +1,5 @@
 
-use Test;
+use Test::More tests => 1;
 
-BEGIN{plan tests => 1}
+BEGIN { use_ok("HTML::StickyQuery"); }
 
-use HTML::StickyQuery;
-ok(1);

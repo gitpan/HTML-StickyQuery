@@ -1,12 +1,10 @@
 
-use Test;
+use Test::More tests => 1;
 use HTML::StickyQuery;
-
-BEGIN{plan tests => 1}
 
 my $s = HTML::StickyQuery->new;
 $s->sticky(
-	   file => 't/test5.html',
-	   param => {SID => 'xxx'}
-	   );
-ok($s->output,qq{<a href="test.cgi?SID=xxx" name="&lt;&quot;&amp;foo&gt;">});
+    file => 't/test5.html',
+    param => {SID => 'xxx'}
+);
+like($s->output, qr#<a href="test\.cgi\?SID=xxx" name="&lt;&quot;&amp;foo&gt;">#);

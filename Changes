@@ -4,6 +4,9 @@
 	* now accept paramable objects. 
 	(Thanks to Hiroyuki Kobayasi <kobayasi@cpan.org>)
 	* fixed docs.
+	* 0.10
+	* added sticky_keys option
+	* rewrite all test codes by Test::More
 
 2002-05-01  IKEBE Tomohiro  <ikebe@edge.co.jp>
 

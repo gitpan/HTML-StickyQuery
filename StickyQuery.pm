@@ -1,11 +1,11 @@
 package HTML::StickyQuery;
-# $Id: StickyQuery.pm,v 1.5 2002/05/01 14:40:49 ikechin Exp $
+# $Id: StickyQuery.pm,v 1.8 2002/09/18 07:59:30 ikechin Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use vars qw($VERSION);
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 sub new {
     my $class = shift;
@@ -39,6 +39,16 @@ sub sticky {
 	}
 	$self->{param} = \%data;
     }
+
+    if ($args{sticky_keys}) {
+	my %sticky = map { $_ => 1 } @{$args{sticky_keys}};
+	my %new;
+	while (my($k, $v) = each %{$self->{param}}) {
+	    $new{$k} = $v if $sticky{$k}
+	}
+	$self->{param} = \%new;
+    }
+
     $self->{output} = "";
     if ($args{file}) {
 	$self->parse_file($args{file});
@@ -177,7 +187,7 @@ HTML::StickyQuery - add sticky QUERY_STRING
   my $s = HTML::StickyQuery->new(
        regexp => '\.cgi$',
        abs => 0,
-       keep_original => 1
+       keep_original => 1,
   );
 
   print $s->sticky(
@@ -190,7 +200,8 @@ HTML::StickyQuery - add sticky QUERY_STRING
   my $q = CGI->new;
   print $s->sticky(
       file => 'foo.html',
-      param => $q
+      param => $q,
+      sticky_keys => [qw(SESSIONID)]
   );
 
 
@@ -262,6 +273,11 @@ specify the HTML document as arrayref.
 
 QUERY_STRING data. as hashref or object which implements I<param> method.
 (eg. CGI, Apache::Request)
+
+=item sticky_keys
+
+specify sticky data keys as arrayref. any keys which are not in this list are ignored.
+if not specified, all keys are kept.
 
 =back
 
@@ -352,7 +368,8 @@ search.cgi:
   my $sticky = HTML::StickyQuery->new(regexp => qr/search\.cgi$/);
   print $query->header, $sticky->sticky(
       scalarref => \$output,
-      param => { search => $query->param('search') },
+      param => $qyery,
+      sticky_keys => [qw(search)]
   );
 
 

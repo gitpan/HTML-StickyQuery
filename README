@@ -8,7 +8,7 @@ SYNOPSIS
       my $s = HTML::StickyQuery->new(
            regexp => '\.cgi$',
            abs => 0,
-           keep_original => 1
+           keep_original => 1,
       );
 
       print $s->sticky(
@@ -21,7 +21,8 @@ SYNOPSIS
       my $q = CGI->new;
       print $s->sticky(
           file => 'foo.html',
-          param => $q
+          param => $q,
+          sticky_keys => [qw(SESSIONID)]
       );
 
 DESCRIPTION
@@ -60,6 +61,10 @@ METHODS
 
     param    QUERY_STRING data. as hashref or object which implements *param*
              method. (eg. CGI, Apache::Request)
+
+    sticky_keys
+             specify sticky data keys as arrayref. any keys which are not in
+             this list are ignored. if not specified, all keys are kept.
 
 EXAMPLES
   KEEP SESSION ID
@@ -146,7 +151,8 @@ EXAMPLES
       my $sticky = HTML::StickyQuery->new(regexp => qr/search\.cgi$/);
       print $query->header, $sticky->sticky(
           scalarref => \$output,
-          param => { search => $query->param('search') },
+          param => $qyery,
+          sticky_keys => [qw(search)]
       );
 
 AUTHOR
