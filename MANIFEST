@@ -1,3 +1,4 @@
+README
 Changes
 MANIFEST
 Makefile.PL
@@ -8,6 +9,7 @@ t/03scalarref.t
 t/04override.t
 t/05regexp.t
 t/06abs.t
+t/07arrayref.t
 t/test.html
 t/test2.html
 t/test3.html

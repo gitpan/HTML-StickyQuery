@@ -6,7 +6,7 @@ use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 sub new {
     my $class = shift;
@@ -42,6 +42,11 @@ sub sticky {
     elsif ($args{scalarref}) {
 	$self->parse(${$args{scalarref}});
     }
+    elsif ($args{arrayref}) {
+	foreach my $line(@{$args{arrayref}}) {
+	    $self->parse($line);
+	}
+    }
     return $self->{output};
 }
 
@@ -57,27 +62,31 @@ sub start {
 	return;
     }
     else {
-	if ($attr->{href} =~ m#^(mailto:|ftp:)#) {
+	my $u = URI->new($attr->{href});
+	# ignore abstitute URI
+	if (!$self->{abs} && $u->scheme) {
 	    $self->{output} .= $orig;
 	    return;
 	}
-	if(!$self->{abs} && $attr->{href} =~ m#^(http://|https://)#) {
+	# when URI has other scheme (ie. mailto ftp ..)
+	if(defined($u->scheme) && $u->scheme ne 'http' && $u->scheme ne 'https') {
 	    $self->{output} .= $orig;
 	    return;
 	}
 	else {
 	    if (!$self->{regexp} || $attr->{href} =~ m/$self->{regexp}/) {
-		my $u = URI->new($attr->{href});
 		if ($self->{override}) {
 		    $u->query_form(%{$self->{param}});
 		}
 		else {
-		    $u->query_form(%{$self->{param}},$u->query_form);
+                   my %merged = (%{$self->{param}}, $u->query_form);
+                   $u->query_form(%merged);
 		}
-		$self->{output} .= sprintf(qq{<$tagname href="%s"},$u->as_string);
+		$self->{output} .= sprintf(qq{<$tagname href="%s"},
+					   $u->as_string);
 		delete $attr->{href};
 		while (my($key,$val) = each %$attr) {
-		    $self->{output} .= qq{ $key=$val};
+		    $self->{output} .= qq{ $key="$val"};
 		}
 		$self->{output} .= '>';
 		return;
@@ -98,12 +107,12 @@ sub text {
 }
 
 1;
+
 __END__
-# Below is the stub of documentation for your module. You better edit it!
 
 =head1 NAME
 
-HTML::StickyQuery - add sticky query string to a tag href attributes.
+HTML::StickyQuery - add sticky QUERY_STRING to a tag href attributes.
 
 =head1 SYNOPSIS
 
@@ -124,7 +133,7 @@ HTML::StickyQuery - add sticky query string to a tag href attributes.
 =head1 DESCRIPTION
 
 this module is sub class of L<HTML::Parser> and uses it to parse HTML document
-and add query string to href attributes.
+and add QUERY_STRING to href attributes.
 
 you can assign Session ID or any form data without using cookie.
 
@@ -143,14 +152,11 @@ constructor of HTML::StickyQuery object. the options are below.
 
 =item abs
 
-add query string to absolute URI or not. (default: 0)
-
-but, if you enabled this option.
-your query string are revealed via HTTP_REFERER. very insecure!
+add QUERY_STRING to absolute URI or not. (default: 0)
 
 =item override
 
-override original query string or not (default: 0)
+override original QUERY_STRING or not (default: 0)
 
 =item regexp
 
@@ -166,7 +172,7 @@ regular expression of affected URI. (default: I<none>)
 
 =item sticky(%options)
 
-parse HTML and add query string. return HTML document.
+parse HTML and add QUERY_STRING. return HTML document.
 the options are below.
 
 =over 5
@@ -179,9 +185,13 @@ specify the HTML file.
 
 specify the HTML document as scalarref.
 
+=item arrayref
+
+specify the HTML document as arrayref.
+
 =item param
 
-query string data. as hashref.
+QUERY_STRING data. as hashref.
 
 =back
 
@@ -195,6 +205,12 @@ IKEBE Tomohiro <ikebe@edge.co.jp>
 
 L<HTML::Parser> L<HTML::FillInForm>
 
+=head1 CREDITS
+
+Fixes,Bug Reports.
+
+ Tatsuhiko Miyagawa
+
 =head1 COPYRIGHT
 
 Copyright(C) 2001 IKEBE Tomohiro All rights reserved.
@@ -202,3 +218,4 @@ Copyright(C) 2001 IKEBE Tomohiro All rights reserved.
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself. 
 
 =cut
+

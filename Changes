@@ -1,4 +1,12 @@
+2001-10-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* 0.04
+	* fixed override, when original URI has QUERY_STRING which has same key (Tatsuhiko Miyagawa)
+	* fixed URI scheme handling problem.
+	* add arrayref parse.
+
 2001-10-17  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
 	* 0.03
 	* use Test::Harness.
 	* add regexp support.
