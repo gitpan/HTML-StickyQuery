@@ -1,5 +1,16 @@
-Revision history for Perl extension HTML::StickyQuery.
+2001-10-17  IKEBE Tomohiro  <ikebe@edge.co.jp>
+	* 0.03
+	* use Test::Harness.
+	* add regexp support.
+	
+2001-10-17  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
-0.01  Wed Oct 17 13:07:19 2001
-	- original version; created by h2xs 1.19
+	* 0.02
+	* add test code.
+
+	
+
+
+
+
 

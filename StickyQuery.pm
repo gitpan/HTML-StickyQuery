@@ -6,7 +6,7 @@ use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 sub new {
     my $class = shift;
@@ -16,9 +16,9 @@ sub new {
     my $self = bless {
 		      override => 0,
 		      abs => 0,
-		      suffix => [qw(cgi pl)],
+		      regexp => undef,
 		     },$class;
-    foreach my $key(qw(override abs suffix)) {
+    foreach my $key(qw(override abs regexp)) {
 	$self->{$key} = $args{$key} if exists $args{$key};
     }
     $self->init;
@@ -28,9 +28,11 @@ sub new {
 sub sticky {
     my $self = shift;
     my %args = @_;
+
     $self->{param} = $args{param} 
       if exists $args{param};
     $self->{output} = "";
+
     if (ref($args{param}) ne 'HASH') {
 	croak "param must be a hash reference";
     }
@@ -64,23 +66,21 @@ sub start {
 	    return;
 	}
 	else {
-	    foreach my $suf(@{$self->{suffix}}) {
-		if ($attr->{href} =~ m/\.$suf\??.*$/) {
-		    my $u = URI->new($attr->{href});
-		    if ($self->{override}) {
-			$u->query_form(%{$self->{param}});
-		    }
-		    else {
-			$u->query_form(%{$self->{param}},$u->query_form);
-		    }
-		    $self->{output} .= sprintf(qq{<$tagname href="%s"},$u->as_string);
-		    delete $attr->{href};
-		    while (my($key,$val) = each %$attr) {
-			$self->{output} .= qq{ $key=$val};
-		    }
-		    $self->{output} .= '>';
-		    return;
+	    if (!$self->{regexp} || $attr->{href} =~ m/$self->{regexp}/) {
+		my $u = URI->new($attr->{href});
+		if ($self->{override}) {
+		    $u->query_form(%{$self->{param}});
 		}
+		else {
+		    $u->query_form(%{$self->{param}},$u->query_form);
+		}
+		$self->{output} .= sprintf(qq{<$tagname href="%s"},$u->as_string);
+		delete $attr->{href};
+		while (my($key,$val) = each %$attr) {
+		    $self->{output} .= qq{ $key=$val};
+		}
+		$self->{output} .= '>';
+		return;
 	    }
 	    $self->{output} .= $orig;
 	}
@@ -109,7 +109,11 @@ HTML::StickyQuery - add sticky query string to a tag href attributes.
 
   use HTML::StickyQuery;
 
-  my $s = HTML::StickyQuery->new;
+  my $s = HTML::StickyQuery->new(
+                                 regexp => '\.cgi$',
+                                 abs => 0,
+                                 override => 1
+                                 );
   print $s->sticky(
                    file => 'foo.html',
                    param => {
@@ -120,9 +124,12 @@ HTML::StickyQuery - add sticky query string to a tag href attributes.
 =head1 DESCRIPTION
 
 this module is sub class of L<HTML::Parser> and uses it to parse HTML document
-and add query string to href attribute.
+and add query string to href attributes.
 
-ie. assign Session ID without using cookie.
+you can assign Session ID or any form data without using cookie.
+
+if you want to use sticky CGI data via FORM.
+it is better to use L<HTML::FillInForm>.
 
 =head1 CONSTRUCTOR
 
@@ -130,23 +137,24 @@ ie. assign Session ID without using cookie.
 
 =item new(%option)
 
-constructor of HTML::StickyQuery object.
-
-the options are below.
+constructor of HTML::StickyQuery object. the options are below.
 
 =over 5
 
 =item abs
-  
-  add query string to absolute URI or not. (default: 0)
+
+add query string to absolute URI or not. (default: 0)
+
+but, if you enabled this option.
+your query string are revealed via HTTP_REFERER. very insecure!
 
 =item override
-  
-  override original query string or not (default: 0)
 
-=item suffix
+override original query string or not (default: 0)
 
-  list of suffix. if original url cantain these , will be affected. (default: [qw(cgi pl)])
+=item regexp
+
+regular expression of affected URI. (default: I<none>)
 
 =back
 
@@ -158,8 +166,7 @@ the options are below.
 
 =item sticky(%options)
 
-parse HTML and add query stirng. return HTML document.
-
+parse HTML and add query string. return HTML document.
 the options are below.
 
 =over 5
@@ -170,7 +177,7 @@ specify the HTML file.
 
 =item scalarref
 
-specify the HTML document's scalarref.
+specify the HTML document as scalarref.
 
 =item param
 
@@ -186,7 +193,7 @@ IKEBE Tomohiro <ikebe@edge.co.jp>
 
 =head1 SEE ALSO
 
-L<HTML::Parser>.
+L<HTML::Parser> L<HTML::FillInForm>
 
 =head1 COPYRIGHT
 
