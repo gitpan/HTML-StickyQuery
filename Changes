@@ -1,3 +1,11 @@
+2002-01-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* 0.06
+	* [API change]
+	override option was obsolete. 
+	instead, keep_original option is available.
+	(Thanks to Tatsuhiko Miyagawa <miyagawa@bulknews.new>)
+
 2001-10-19  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.05
@@ -7,7 +15,8 @@
 2001-10-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.04
-	* fixed override, when original URI has QUERY_STRING which has same key (Tatsuhiko Miyagawa)
+	* fixed override, when original URI has QUERY_STRING which has same key 
+	(Thanks to Tatsuhiko Miyagawa <miyagawa@bulknews.net>)
 	* fixed URI scheme handling problem.
 	* add arrayref parse.
 

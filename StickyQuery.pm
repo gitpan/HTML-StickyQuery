@@ -1,12 +1,12 @@
 package HTML::StickyQuery;
-
+# $Id: StickyQuery.pm,v 1.2 2002/01/18 14:17:30 ikechin Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 sub new {
     my $class = shift;
@@ -17,11 +17,13 @@ sub new {
 		      override => 0,
 		      abs => 0,
 		      regexp => undef,
-		     },$class;
-    foreach my $key(qw(override abs regexp)) {
+		     }, $class;
+
+    carp "option override is obsoleted! please use keep_original" if exists $args{override};
+    foreach my $key(qw(keep_original override abs regexp)) {
 	$self->{$key} = $args{$key} if exists $args{$key};
     }
-    $self->init;
+    $self->SUPER::init;
     $self;
 }
 
@@ -69,26 +71,25 @@ sub start {
 
 	my $u = URI->new($attr->{href});
 
+	# skip absolute URI
 	if (!$self->{abs} && $u->scheme) {
 	    $self->{output} .= $orig;
 	    return;
 	}
-
 	# when URI has other scheme (ie. mailto ftp ..)
-	if(defined($u->scheme) && $u->scheme ne 'http' && $u->scheme ne 'https') {
+	if(defined($u->scheme) && $u->scheme !~ m/^https?/) {
 	    $self->{output} .= $orig;
 	    return;
 	}
 	else {
-	    if (!$self->{regexp} || $attr->{href} =~ m/$self->{regexp}/) {
-		if ($self->{override}) {
-		    $u->query_form(%{$self->{param}});
+	    if (!$self->{regexp} || $u->path =~ m/$self->{regexp}/) {
+		if ($self->{keep_original}) {
+		    my %merged = ($u->query_form, %{$self->{param}});
+		    $u->query_form(%merged);
 		}
 		else {
-                   my %merged = (%{$self->{param}}, $u->query_form);
-                   $u->query_form(%merged);
+                   $u->query_form(%{$self->{param}});
 		}
-
 		$self->{output} .= qq{<$tagname};
 		# save attr order.
 		foreach my $key(@$attrseq) {
@@ -97,7 +98,8 @@ sub start {
 						   $self->escapeHTML($u->as_string));
 		    }
 		    else {
-			$self->{output} .= sprintf(qq{ $key="%s"},$self->escapeHTML($attr->{$key}));
+			$self->{output} .= sprintf(qq{ $key="%s"},
+						   $self->escapeHTML($attr->{$key}));
 		    }
 		}
 		$self->{output} .= '>';
@@ -143,7 +145,7 @@ HTML::StickyQuery - add sticky QUERY_STRING to a tag href attributes.
   my $s = HTML::StickyQuery->new(
                                  regexp => '\.cgi$',
                                  abs => 0,
-                                 override => 1
+                                 keep_original => 1
                                  );
   print $s->sticky(
                    file => 'foo.html',
@@ -156,8 +158,7 @@ HTML::StickyQuery - add sticky QUERY_STRING to a tag href attributes.
 
 this module is sub class of L<HTML::Parser> and uses it to parse HTML document
 and add QUERY_STRING to href attributes.
-
-you can assign Session ID or any form data without using cookie.
+Handy for maintaining state without cookie or something, transparently.
 
 if you want to use sticky CGI data via FORM.
 it is better to use L<HTML::FillInForm>.
@@ -178,7 +179,13 @@ add QUERY_STRING to absolute URI or not. (default: 0)
 
 =item override
 
-override original QUERY_STRING or not (default: 0)
+this option is obsolete.
+please use keep_original option.
+
+=item keep_original
+
+keep original QUERY_STRING or not. (default: 1)
+when this option is false. all old QUERY_STRING is removed.
 
 =item regexp
 
@@ -221,11 +228,13 @@ QUERY_STRING data. as hashref.
 
 =head1 EXAMPLE
 
+=head2 KEEP SESSION ID
+
 typical example of CGI application using session.
 
 use L<Apache::Session>,L<HTML::Template> and L<HTML::StickyQuery>
 
-template file. F<test.html>
+template file:
 
  <html>
  <head>
@@ -234,14 +243,14 @@ template file. F<test.html>
  <body>
  COUNT: <TMPL_VAR NAME="count"><br>
  <hr>
- <a href="test.cgi">countup</a><br>
+ <a href="session.cgi">countup</a><br>
  <hr>
  </body>
  </html>
 
-CGI program. F<test.cgi>
+session.cgi:
 
- #!/usr/local/bin/perl
+ #!perl
  
  use strict;
  use CGI;
@@ -279,9 +288,38 @@ CGI program. F<test.cgi>
 		   );
  
 
+=head2 KEEP SEARCH WORD IN HTML PAGING
+
+template file (simplified):
+
+  <A href="./search.cgi?pagenum=<TMPL_VAR name=nextpage>">Next 20 results</A>
+
+search.cgi:
+
+  #!perl
+  use CGI;
+  use HTML::StickyQuery;
+  use HTML::Template;
+
+  my $query = CGI->new;
+  my $tmpl  = HTML::Template->new(filename => 'search.html');
+
+  # do searching with $query and put results into $tmpl
+  # ...
+
+  # set next page offset
+  $tmpl->param(nextpagee => $query->param('pagenum') + 1);
+
+  my $output = $tmpl->output;
+  my $sticky = HTML::StickyQuery->new(regexp => qr/search\.cgi$/);
+  ptiny $query->header, $sticky->sticky(
+      scalarref => \$output,
+      param => { search => $query->param('search') },
+  );
+ 
 =head1 AUTHOR
 
-IKEBE Tomohiro <ikebe@edge.co.jp>
+IKEBE Tomohiro E<lt>ikebe@edge.co.jpE<gt>
 
 =head1 SEE ALSO
 
