@@ -1,12 +1,12 @@
 package HTML::StickyQuery;
-# $Id: StickyQuery.pm,v 1.3 2002/01/21 03:32:33 ikechin Exp $
+# $Id: StickyQuery.pm,v 1.5 2002/05/01 14:40:49 ikechin Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 sub new {
     my $class = shift;
@@ -83,7 +83,22 @@ sub start {
 	else {
 	    if (!$self->{regexp} || $u->path =~ m/$self->{regexp}/) {
 		if ($self->{keep_original}) {
-		    my %merged = ($u->query_form, %{$self->{param}});
+		    my %original;
+		    my @original = $u->query_form;
+		    while (my ($key, $val) = splice(@original, 0, 2)) {
+			if (exists $original{$key}) {
+			    if (ref $original{$key} eq 'ARRAY') {
+				push @{$original{$key}}, $val;
+			    }
+			    else {
+				$original{$key} = [ $original{$key}, $val ];
+			    }
+			}
+			else {
+			    $original{$key} = $val;			    
+			}
+		    } 
+		    my %merged = (%original, %{$self->{param}});
 		    $u->query_form(%merged);
 		}
 		else {
@@ -117,6 +132,16 @@ sub end {
 sub text {
     my ($self, $orig) = @_;
     $self->{output} .= $orig;
+}
+
+sub comment {
+    my ($self, $orig) = @_;
+    $self->{output} .= qq/<!--$orig-->/;
+}
+
+sub declaration {
+    my ($self, $orig) = @_;
+    $self->{output} .= qq/<!$orig>/;
 }
 
 sub escapeHTML {
