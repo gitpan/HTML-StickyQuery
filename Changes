@@ -1,3 +1,9 @@
+2001-10-19  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* 0.05
+	* fixed escape HTML problem.
+	* save order of attributes.
+
 2001-10-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.04

@@ -6,7 +6,7 @@ use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 sub new {
     my $class = shift;
@@ -62,12 +62,18 @@ sub start {
 	return;
     }
     else {
+	unless(exists $attr->{href}) {
+	    $self->{output} .= $orig;
+	    return;
+	}
+
 	my $u = URI->new($attr->{href});
-	# ignore abstitute URI
+
 	if (!$self->{abs} && $u->scheme) {
 	    $self->{output} .= $orig;
 	    return;
 	}
+
 	# when URI has other scheme (ie. mailto ftp ..)
 	if(defined($u->scheme) && $u->scheme ne 'http' && $u->scheme ne 'https') {
 	    $self->{output} .= $orig;
@@ -82,11 +88,17 @@ sub start {
                    my %merged = (%{$self->{param}}, $u->query_form);
                    $u->query_form(%merged);
 		}
-		$self->{output} .= sprintf(qq{<$tagname href="%s"},
-					   $u->as_string);
-		delete $attr->{href};
-		while (my($key,$val) = each %$attr) {
-		    $self->{output} .= qq{ $key="$val"};
+
+		$self->{output} .= qq{<$tagname};
+		# save attr order.
+		foreach my $key(@$attrseq) {
+		    if ($key eq "href"){
+			$self->{output} .= sprintf(qq{ href="%s"},
+						   $self->escapeHTML($u->as_string));
+		    }
+		    else {
+			$self->{output} .= sprintf(qq{ $key="%s"},$self->escapeHTML($attr->{$key}));
+		    }
 		}
 		$self->{output} .= '>';
 		return;
@@ -104,6 +116,16 @@ sub end {
 sub text {
     my ($self,$orig) = @_;
     $self->{output} .= $orig;
+}
+
+sub escapeHTML {
+    my $self = shift;
+    my $text = shift;
+    $text =~ s/&/&amp;/g;
+    $text =~ s/"/&quot;/g;
+    $text =~ s/</&lt;/g;
+    $text =~ s/>/&gt;/g;
+    return $text;
 }
 
 1;
@@ -196,6 +218,66 @@ QUERY_STRING data. as hashref.
 =back
 
 =back
+
+=head1 EXAMPLE
+
+typical example of CGI application using session.
+
+use L<Apache::Session>,L<HTML::Template> and L<HTML::StickyQuery>
+
+template file. F<test.html>
+
+ <html>
+ <head>
+ <title>Session Test</title>
+ </head>
+ <body>
+ COUNT: <TMPL_VAR NAME="count"><br>
+ <hr>
+ <a href="test.cgi">countup</a><br>
+ <hr>
+ </body>
+ </html>
+
+CGI program. F<test.cgi>
+
+ #!/usr/local/bin/perl
+ 
+ use strict;
+ use CGI;
+ use HTML::Template;
+ use HTML::StickyQuery;
+ use Apache::Session::DB_File;
+ 
+ my %session;
+ my $cgi = CGI->new;
+ 
+ # create session.
+ my $id = $cgi->param('SESSIONID');
+ tie %session,'Apache::Session::DB_File',$id,{
+	 				      FileName => './session.db',
+ 					      LockDirectory => './lock'
+ };
+
+ $session{count} = $session{count} + 1;
+ 
+ my $tmpl = HTML::Template->new(filename => './test.html');
+ 
+ $tmpl->param(count => $session{count});
+ 
+ my $output = $tmpl->output;
+ 
+ # no COOKIE
+ print $cgi->header;
+ 
+ my $stq = HTML::StickyQuery->new;
+ print $stq->sticky(
+	 	    scalarref => \$output,
+		    param => {
+			      SESSIONID => $session{_session_id}
+			     }
+		   );
+ 
 
 =head1 AUTHOR
 

@@ -53,6 +53,65 @@ METHODS
         param
              QUERY_STRING data. as hashref.
 
+EXAMPLE
+    typical example of CGI application using session.
+
+    use the Apache::Session manpage,the HTML::Template manpage and the
+    HTML::StickyQuery manpage
+
+    template file. test.html
+
+     <html>
+     <head>
+     <title>Session Test</title>
+     </head>
+     <body>
+     COUNT: <TMPL_VAR NAME="count"><br>
+     <hr>
+     <a href="test.cgi">countup</a><br>
+     <hr>
+     </body>
+     </html>
+
+    CGI program. test.cgi
+
+     #!/usr/local/bin/perl
+ 
+     use strict;
+     use CGI;
+     use HTML::Template;
+     use HTML::StickyQuery;
+     use Apache::Session::DB_File;
+ 
+     my %session;
+     my $cgi = CGI->new;
+ 
+     # create session.
+     my $id = $cgi->param('SESSIONID');
+     tie %session,'Apache::Session::DB_File',$id,{
+                                                  FileName => './session.db',
+                                                  LockDirectory => './lock'
+     };
+
+     $session{count} = $session{count} + 1;
+ 
+     my $tmpl = HTML::Template->new(filename => './test.html');
+ 
+     $tmpl->param(count => $session{count});
+ 
+     my $output = $tmpl->output;
+ 
+     # no COOKIE
+     print $cgi->header;
+ 
+     my $stq = HTML::StickyQuery->new;
+     print $stq->sticky(
+                        scalarref => \$output,
+                        param => {
+                                  SESSIONID => $session{_session_id}
+                                 }
+                       );
+ 
 AUTHOR
     IKEBE Tomohiro <ikebe@edge.co.jp>
 

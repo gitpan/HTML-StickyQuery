@@ -10,7 +10,9 @@ t/04override.t
 t/05regexp.t
 t/06abs.t
 t/07arrayref.t
+t/08escape.t
 t/test.html
 t/test2.html
 t/test3.html
 t/test4.html
+t/test5.html
