@@ -1,11 +1,11 @@
 package HTML::StickyQuery;
-# $Id: StickyQuery.pm,v 1.8 2002/09/18 07:59:30 ikechin Exp $
+# $Id: StickyQuery.pm,v 1.9 2003/05/29 07:24:45 ikebe Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use vars qw($VERSION);
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 sub new {
     my $class = shift;
@@ -22,6 +22,7 @@ sub new {
     # backward compat
     $self->{keep_original} = !$args{override} if $args{override};
     $self->SUPER::init;
+    $self->boolean_attribute_value('__BOOLEAN__');
     $self;
 }
 
@@ -122,6 +123,9 @@ sub start {
 		    if ($key eq "href"){
 			$self->{output} .= sprintf(qq{ href="%s"},
 						   $self->escapeHTML($u->as_string));
+		    }
+		    elsif ($attr->{$key} eq '__BOOLEAN__') {
+			$self->{output} .= " $key";
 		    }
 		    else {
 			$self->{output} .= sprintf(qq{ $key="%s"},

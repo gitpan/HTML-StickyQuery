@@ -1,3 +1,8 @@
+2003-05-29  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* support boolean attributes. 
+	(Thanks to Tatsuhiko Miyagawa <miyagawa@buknews.net)
+
 2002-09-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.09
@@ -25,7 +30,7 @@
 	* [API change]
 	override option was obsolete. 
 	instead, keep_original option is available.
-	(Thanks to Tatsuhiko Miyagawa <miyagawa@bulknews.new>)
+	(Thanks to Tatsuhiko Miyagawa <miyagawa@bulknews.net>)
 
 2001-10-19  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
