@@ -1,11 +1,11 @@
 package HTML::StickyQuery;
-# $Id: StickyQuery.pm,v 1.9 2003/05/29 07:24:45 ikebe Exp $
+# $Id: StickyQuery.pm,v 1.10 2003/10/08 09:46:55 ikebe Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use vars qw($VERSION);
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 sub new {
     my $class = shift;
@@ -138,6 +138,11 @@ sub start {
 	    $self->{output} .= $orig;
 	}
     }
+}
+
+sub process {
+    my($self, $text, $orig) = @_;
+    $self->{output} .= $orig;
 }
 
 sub end {

@@ -1,5 +1,5 @@
 Changes
-MANIFEST
+MANIFEST			This list of files
 Makefile.PL
 README
 StickyQuery.pm
@@ -16,6 +16,7 @@ t/10multiple.t
 t/11param.t
 t/12sticky_keys.t
 t/13standalongtag.t
+t/14xhtml.t
 t/standalone.html
 t/test.html
 t/test2.html
@@ -23,3 +24,4 @@ t/test3.html
 t/test4.html
 t/test5.html
 t/test6.html
+t/xhtml.html

@@ -1,3 +1,8 @@
+2003-10-08  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* added valid XML(XHTML) support.
+	(Thanks to Kensaku Fujiwara)
+
 2003-05-29  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* support boolean attributes. 
