@@ -1,28 +1,28 @@
 package HTML::StickyQuery;
-# $Id: StickyQuery.pm,v 1.2 2002/01/18 14:17:30 ikechin Exp $
+# $Id: StickyQuery.pm,v 1.3 2002/01/21 03:32:33 ikechin Exp $
 use strict;
 use base qw(HTML::Parser);
 use URI;
 use Carp;
 use vars qw($VERSION);
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 sub new {
     my $class = shift;
-    croak "odd number of " . __PACKAGE__ . "->new arguments"
-      if @_ % 2;
+    croak "odd number of " . __PACKAGE__ . "->new arguments" if @_ % 2;
     my %args = @_;
     my $self = bless {
-		      override => 0,
-		      abs => 0,
-		      regexp => undef,
-		     }, $class;
+	keep_original => 1,
+	abs => 0,
+	regexp => undef,
+    }, $class;
 
-    carp "option override is obsoleted! please use keep_original" if exists $args{override};
-    foreach my $key(qw(keep_original override abs regexp)) {
+    foreach my $key(qw(keep_original abs regexp)) {
 	$self->{$key} = $args{$key} if exists $args{$key};
     }
+    # backward compat
+    $self->{keep_original} = !$args{override} if $args{override};
     $self->SUPER::init;
     $self;
 }
@@ -32,7 +32,7 @@ sub sticky {
     my %args = @_;
 
     $self->{param} = $args{param} 
-      if exists $args{param};
+	if exists $args{param};
     $self->{output} = "";
 
     if (ref($args{param}) ne 'HASH') {
@@ -58,7 +58,7 @@ sub output {
 }
 
 sub start {
-    my ($self,$tagname,$attr,$attrseq,$orig) = @_;
+    my ($self, $tagname, $attr, $attrseq, $orig) = @_;
     if ($tagname ne 'a') {
 	$self->{output} .= $orig;
 	return;
@@ -68,7 +68,6 @@ sub start {
 	    $self->{output} .= $orig;
 	    return;
 	}
-
 	my $u = URI->new($attr->{href});
 
 	# skip absolute URI
@@ -88,7 +87,7 @@ sub start {
 		    $u->query_form(%merged);
 		}
 		else {
-                   $u->query_form(%{$self->{param}});
+		    $u->query_form(%{$self->{param}});
 		}
 		$self->{output} .= qq{<$tagname};
 		# save attr order.
@@ -111,12 +110,12 @@ sub start {
 }
 
 sub end {
-    my ($self,$tagname,$orig) = @_;
+    my ($self, $tagname, $orig) = @_;
     $self->{output} .= $orig;
 }
 
 sub text {
-    my ($self,$orig) = @_;
+    my ($self, $orig) = @_;
     $self->{output} .= $orig;
 }
 

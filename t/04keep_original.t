@@ -4,13 +4,16 @@ use HTML::StickyQuery;
 BEGIN{plan tests => 3}
 
 {
-    my $s = HTML::StickyQuery->new(keep_original => 1);
+    my $s = HTML::StickyQuery->new;
     $s->sticky(
        file => './t/test2.html',
-       param => {SID => 'xyz'}
+       param => {
+	   SID => 'xyz',
+	   foo => 'baz'
+       }
     );
     ok($s->output, qr/SID=xyz/);
-    ok($s->output, qr/foo=bar/);
+    ok($s->output, qr/foo=baz/);
 }
 
 {
@@ -19,5 +22,5 @@ BEGIN{plan tests => 3}
        file => './t/test2.html',
        param => {SID => 'xyz'}
     );
-    ok($s->output,'<a href="./test.cgi?SID=xyz">');
+    ok($s->output, '<a href="./test.cgi?SID=xyz">');
 }

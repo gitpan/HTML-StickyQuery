@@ -1,3 +1,9 @@
+2002-01-21  IKEBE Tomohiro  <ikebe@edge.co.jp>
+
+	* 0.07
+	* default behavior, keep_original => 1.
+	* think about backward compat.
+
 2002-01-18  IKEBE Tomohiro  <ikebe@edge.co.jp>
 
 	* 0.06
