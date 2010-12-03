@@ -1,11 +1,11 @@
 package HTML::StickyQuery;
 # $Id: StickyQuery.pm,v 1.10 2003/10/08 09:46:55 ikebe Exp $
 use strict;
-use base qw(HTML::Parser);
+use parent qw(HTML::Parser);
 use URI;
 use vars qw($VERSION);
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 sub new {
     my $class = shift;
@@ -384,7 +384,7 @@ search.cgi:
 
 =head1 AUTHOR
 
-IKEBE Tomohiro E<lt>ikebe@edge.co.jpE<gt>
+IKEBE Tomohiro E<lt>ikebe@livedoor.jpE<gt>
 
 =head1 SEE ALSO
 
